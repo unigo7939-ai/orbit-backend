@@ -16,9 +16,6 @@ function getProvider(): EthereumProvider | null {
   return eth ?? null;
 }
 
-/** ASCII-only statement — some wallet SIWE parsers reject CJK in the message body. */
-const SIWE_STATEMENT = 'Sign in to ORBIT Admin';
-
 export default function LoginPage() {
   const { t } = useAdminI18n();
   const [status, setStatus] = useState<string>('');
@@ -57,21 +54,39 @@ export default function LoginPage() {
         return;
       }
 
+      const safeChainId =
+        Number.isFinite(chainId) && chainId > 0 ? chainId : 8453;
+
+      // Omit `statement` — CJK text breaks strict EIP-4361 parsers in MetaMask/Rabby.
       const message = new SiweMessage({
         domain: nonceData.domain,
         address,
-        statement: SIWE_STATEMENT,
-        uri: window.location.origin,
+        uri: `https://${nonceData.domain}`,
         version: '1',
-        chainId,
+        chainId: safeChainId,
         nonce: nonceData.nonce.trim(),
-        issuedAt: new Date().toISOString(),
+        issuedAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
       }).prepareMessage();
 
-      const signature = (await provider.request({
-        method: 'personal_sign',
-        params: [message, address],
-      })) as string;
+      let signature: string | null = null;
+      let signError: Error | null = null;
+      for (const params of [
+        [message, address],
+        [address, message],
+      ] as const) {
+        try {
+          signature = (await provider.request({
+            method: 'personal_sign',
+            params: [...params],
+          })) as string;
+          break;
+        } catch (e) {
+          signError = e as Error;
+        }
+      }
+      if (!signature) {
+        throw signError ?? new Error('personal_sign failed');
+      }
 
       const res = await fetch('/api/auth/verify', {
         method: 'POST',
