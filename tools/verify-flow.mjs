@@ -43,10 +43,11 @@ async function login() {
   const nonceRes = await fetch(`${BASE}/api/auth/nonce`);
   if (!nonceRes.ok) throw new Error(`nonce ${nonceRes.status}`);
   const cookie1 = jar(nonceRes);
-  const nonce = (await nonceRes.text()).trim();
+  const { nonce: rawNonce, domain } = await nonceRes.json();
+  const nonce = String(rawNonce).trim();
 
   const message = new SiweMessage({
-    domain: 'localhost:3000',
+    domain: domain ?? 'localhost:3000',
     address: account.address,
     statement: 'Sign in to ORBIT Admin',
     uri: BASE,

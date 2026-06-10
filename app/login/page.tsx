@@ -16,6 +16,9 @@ function getProvider(): EthereumProvider | null {
   return eth ?? null;
 }
 
+/** ASCII-only statement — some wallet SIWE parsers reject CJK in the message body. */
+const SIWE_STATEMENT = 'Sign in to ORBIT Admin';
+
 export default function LoginPage() {
   const { t } = useAdminI18n();
   const [status, setStatus] = useState<string>('');
@@ -41,16 +44,27 @@ export default function LoginPage() {
       })) as string;
       const chainId = Number.parseInt(chainIdHex, 16);
 
-      const nonce = await fetch('/api/auth/nonce').then((r) => r.text());
+      const nonceRes = await fetch('/api/auth/nonce');
+      const nonceData = (await nonceRes.json()) as {
+        nonce?: string;
+        domain?: string;
+        error?: string;
+      };
+      if (!nonceRes.ok || !nonceData.nonce || !nonceData.domain) {
+        setStatus(
+          `${t.login.loginFailed}: ${nonceData.error ?? 'Failed to fetch nonce'}`,
+        );
+        return;
+      }
 
       const message = new SiweMessage({
-        domain: window.location.host,
+        domain: nonceData.domain,
         address,
-        statement: t.login.siweStatement,
+        statement: SIWE_STATEMENT,
         uri: window.location.origin,
         version: '1',
         chainId,
-        nonce,
+        nonce: nonceData.nonce.trim(),
         issuedAt: new Date().toISOString(),
       }).prepareMessage();
 

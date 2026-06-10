@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { resolveSiweDomain } from '@/lib/auth/domain';
 import { getSession } from '@/lib/auth/session';
 import { verifySiwe } from '@/lib/auth/siwe';
 import { upsertUserOnLogin } from '@/lib/auth/users';
-import { serverEnv } from '@/lib/env';
 import { AuthError } from '@/lib/errors';
 import { errorResponse } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/ratelimit';
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       body.message,
       body.signature,
       session.nonce,
-      serverEnv.siweDomain,
+      resolveSiweDomain(request),
     );
 
     const user = await upsertUserOnLogin(address);

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { generateNonce } from 'siwe';
+import { resolveSiweDomain } from '@/lib/auth/domain';
 import { getSession } from '@/lib/auth/session';
 import { errorResponse } from '@/lib/http';
 import { clientIp, rateLimit } from '@/lib/ratelimit';
@@ -13,9 +14,9 @@ export async function GET(request: Request) {
     const session = await getSession();
     session.nonce = generateNonce();
     await session.save();
-    return new NextResponse(session.nonce, {
-      status: 200,
-      headers: { 'Content-Type': 'text/plain' },
+    return NextResponse.json({
+      nonce: session.nonce,
+      domain: resolveSiweDomain(request),
     });
   } catch (e) {
     return errorResponse(e);
