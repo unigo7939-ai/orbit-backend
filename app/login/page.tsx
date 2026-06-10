@@ -5,6 +5,7 @@ import { SiweMessage } from 'siwe';
 import { getAddress } from 'viem';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useAdminI18n } from '@/components/AdminI18nProvider';
+import { signSiweMessage } from '@/lib/wallet/sign';
 
 interface EthereumProvider {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -68,25 +69,7 @@ export default function LoginPage() {
         issuedAt: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
       }).prepareMessage();
 
-      let signature: string | null = null;
-      let signError: Error | null = null;
-      for (const params of [
-        [message, address],
-        [address, message],
-      ] as const) {
-        try {
-          signature = (await provider.request({
-            method: 'personal_sign',
-            params: [...params],
-          })) as string;
-          break;
-        } catch (e) {
-          signError = e as Error;
-        }
-      }
-      if (!signature) {
-        throw signError ?? new Error('personal_sign failed');
-      }
+      const signature = await signSiweMessage(provider, message, address);
 
       const res = await fetch('/api/auth/verify', {
         method: 'POST',
@@ -131,6 +114,7 @@ export default function LoginPage() {
         >
           {busy ? t.login.signing : t.login.connect}
         </button>
+        <p className="login-hint">{t.login.metamaskHint}</p>
         {status && <p className="login-status">{status}</p>}
       </div>
     </div>

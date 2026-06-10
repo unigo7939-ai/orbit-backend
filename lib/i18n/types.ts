@@ -52,6 +52,7 @@ export type AdminTranslation = {
     notAdmin: string;
     errorPrefix: string;
     siweStatement: string;
+    metamaskHint: string;
   };
   home: {
     title: string;

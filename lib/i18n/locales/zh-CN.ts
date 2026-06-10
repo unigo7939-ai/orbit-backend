@@ -52,6 +52,8 @@ const zhCN: AdminTranslation = {
     notAdmin: '已登录，但该钱包不是管理员。',
     errorPrefix: '错误',
     siweStatement: '登录 ORBIT 管理后台',
+    metamaskHint:
+      '若 MetaMask 弹出 BigNumber 错误，请更新扩展或改用 Rabby 钱包登录。',
   },
   home: {
     title: 'ORBIT Alpha — 后端',

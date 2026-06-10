@@ -52,6 +52,8 @@ const en: AdminTranslation = {
     notAdmin: 'Logged in, but this wallet is not an admin.',
     errorPrefix: 'Error',
     siweStatement: 'Sign in to ORBIT Admin',
+    metamaskHint:
+      'If MetaMask shows a BigNumber error, update the extension or use Rabby wallet instead.',
   },
   home: {
     title: 'ORBIT Alpha — Backend',
